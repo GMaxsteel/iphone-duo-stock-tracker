@@ -1,0 +1,29 @@
+name: Personal iPhone pickup check
+on:
+  workflow_dispatch:
+    inputs:
+      verify_only:
+        description: Verify access while monitoring is paused
+        type: boolean
+        default: true
+  schedule:
+    - cron: '3-59/5 * * * *'
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: personal-iphone-pickup
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check pickup availability
+        run: node scripts/cloud-probe.mjs
+        env:
+          TRACKER_URL: https://personal-iphone-duo-tracker.iphone-duo-cloudflare.workers.dev
+          VERIFY_ONLY: ${{ github.event_name == 'workflow_dispatch' && inputs.verify_only && 'true' || 'false' }}
